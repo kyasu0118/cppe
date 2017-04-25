@@ -149,8 +149,12 @@ private:
                     }
                     else
                     {
-                        buf[j+1] = '\0';
-                        lex.push_back( &buf[0] );
+                        if( j != 0 )
+                        {
+                            buf[j] = '\0';
+                            lex.push_back( &buf[0] );
+                        }
+                        lex.push_back( ":" );
                     }
                     j = -1;
                     break;
@@ -519,7 +523,7 @@ private:
         if(
            (
            now == "." || now == "::" || now == "++" || now == "--" ||
-           next == "(" || next == "." || next == "::" || next == ";" ||
+           next == "(" || next == "." || next == ":" || next == "::" || next == ";" ||
            (now == "(" && next == ")")
            ) == false )
         {
@@ -576,6 +580,16 @@ private:
         m.values.emplace_back(result);
     }
     
+    static void Switch(MethodData& m, std::list< Token >::const_iterator& i  )
+    {
+        std::string result;
+        while( i->lexeme != "{")
+        {
+            result += Change(i);
+        }
+        m.values.emplace_back(result);
+    }
+    
     static void Line(MethodData& m, std::list< Token >::const_iterator& i  )
     {
         std::string line = "";
@@ -609,7 +623,7 @@ private:
             --i;
         }
         
-        while( i->lexeme != ";" )
+        while( i->lexeme != ";" && i->lexeme != ":" )
         {
             line += Change(i);
         }
@@ -646,6 +660,10 @@ private:
             else if ( i->lexeme == "for" || i->lexeme == "while" || i->lexeme == "if" )
             {
                 ForWhileIf( m, i );
+            }
+            else if ( i->lexeme == "switch" )
+            {
+                Switch( m, i );
             }
             else
             {
@@ -855,12 +873,6 @@ public:
             fprintf( fp, "\n");
             fprintf( fp, "{\n");
             
-            printf( "%s\n", c[i].name.c_str());
-            for( auto ite=c[i].refType.begin(); ite != c[i].refType.end(); ++ite )
-            {
-                printf( "\t%s\n", ite->first.c_str());
-            }
-            
             for( int j=0; j<c[i].classVariable.size(); ++j )
             {
                 fprintf( fp, "\t%s: static ", c[i].classVariable[j].access_modifier.c_str());
@@ -924,11 +936,6 @@ public:
             }
             for( int j=0; j<c[i].memberMethod.size(); ++j )
             {
-                for( auto ite=c[i].memberMethod[j].refType.begin(); ite != c[i].memberMethod[j].refType.end(); ++ite )
-                {
-                    printf( "\t\t%s\n", ite->first.c_str());
-                }
-                
                 fprintf( fp, "\t%s: ", c[i].memberMethod[j].access_modifier.c_str());
                 if( c[i].memberMethod[j].return_type != "" )
                 {

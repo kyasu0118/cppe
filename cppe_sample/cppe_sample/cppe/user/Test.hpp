@@ -5,9 +5,16 @@ class Test : public Base
 	private: const int a;
 	public: void hoge() 
 	{
-		cppe::console::print( cppe::STRING_0002 + * this , age ); 
+		switch( a ) 
+		{
+			case 10: 
+			cppe::console::print( cppe::STRING_0002 ); 
+			break; 
+			case 20: 
+			break; 
+		}
 	}
-	public: Test() : a(769)
+	public: Test() : a(10)
 	{
 	}
 	public: const cppe::string& toString() const
