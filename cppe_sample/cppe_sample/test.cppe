@@ -1,0 +1,20 @@
+class Base
+{
+    public void aaa(int a)
+    {
+        console::print( "ハロー %d\n", a );
+    }
+}
+
+class Test : Base
+{
+    private const int a = 769;
+    public static double age = 20;
+
+    public void hoge()
+    {
+        console::print( "%f test \n" + *this, age );
+    }
+}
+
+
