@@ -1,3 +1,5 @@
+#include <stdio.H>
+
 class Base
 {
     public void aaa(int a)
@@ -13,14 +15,11 @@ class Test : Base
 
     public void hoge()
     {
-        switch( a )
-        {
-            case 10:
-                console::print("hoge");
-                break;
+        int array[3] = { 1, 2, 3 };
 
-            case 20:
-                break;
+        foreach( int i in array )
+        {
+            console::print( "%d\n", i );
         }
     }
 }

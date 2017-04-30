@@ -85,7 +85,6 @@ int main(int argc, const char * argv[])
         Lexical::SetOutputDirectory(argv[1]);
         delete_file( std::string(argv[1]) + "/user/" );
         convert( argv[2] );
-        Lexical::WriteStringList();
         Lexical::WriteClass();
         Lexical::WriteUserInclude();
     }

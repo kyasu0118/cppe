@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <list>
 #include <vector>
@@ -22,6 +23,18 @@ struct VariableData
 {
     std::string name, access_modifier, type, initial_value;
     bool is_const;
+};
+
+struct ArrayData
+{
+    std::string name, access_modifier, type, length;
+    std::vector< std::string > initial_value;
+    bool is_const;
+    
+    ArrayData()
+    {
+        is_const = false;
+    }
 };
 
 struct MethodData
@@ -171,6 +184,7 @@ private:
                 case '&':
                 case '<':
                 case '>':
+                case '#':
 					if( j != 0 )
 					{
 						buf[j] = '\0';
@@ -251,7 +265,8 @@ private:
     static std::vector< ClassData > m_Classes;
     static int m_ScopeDepth;
     static std::string m_Outputirectory;
-    
+    static std::vector< std::string > m_Preprocess;
+
     static void Step( std::list< Token >::const_iterator& i)
     {
         if( i == m_Tokens.end() )
@@ -542,6 +557,12 @@ private:
             Step(i);
         }
         std::string type = PlaneChange(i);
+        
+        while( i->lexeme == "*" || i->lexeme == "&" )
+        {
+            type += PlaneChange(i);
+        }
+        
         std::string name = PlaneChange(i);
         Step(i); //in
         std::string collection = PlaneChange(i);
@@ -593,13 +614,19 @@ private:
     static void Line(MethodData& m, std::list< Token >::const_iterator& i  )
     {
         std::string line = "";
+        std::string type = "";
+        bool isVarible = false;
+        ArrayData array;
         
         if( i->lexeme == "static")
         {
+            array.access_modifier = "static";
+            isVarible = true;
             ++i;
             if( i->lexeme == "const" )
             {
                 ++i;
+                array.is_const = true;
                 m.refType[i->lexeme] = true;
                 --i;
             }
@@ -607,6 +634,8 @@ private:
         }
         else if( i->lexeme == "const" )
         {
+            isVarible = true;
+            array.is_const = true;
             ++i;
             m.refType[i->lexeme] = true;
             --i;
@@ -616,17 +645,75 @@ private:
             ++i;
             if( i->lexeme != "("  && i->lexeme != "{" &&
                 i->lexeme != "::" && i->lexeme != "." &&
-               i->lexeme != "->" )
+                i->lexeme != "->" )
             {
+                isVarible = true;
                 m.refType[i->lexeme] = true;
             }
             --i;
         }
         
-        while( i->lexeme != ";" && i->lexeme != ":" )
+        if( isVarible )
+        {
+            int count = 0;
+            type += PlaneChange(i);
+            ++i;
+            while( i->lexeme != ";" && i->lexeme != "=" )
+            {
+                --i;
+                if( i->lexeme != "*" && i->lexeme != "&" &&
+                    i->lexeme != "[" && i->lexeme != "]" && i->type != TT_INT  )
+                {
+                    type += " ";
+                }
+                if( i->lexeme == "[")
+                {
+                    --i;
+                    array.name = i->lexeme;
+                    ++i;
+                    
+                    ++i;
+                    if( i->type == TT_INT )
+                    {
+                        array.length = i->lexeme.c_str();
+                    }
+                    --i;
+                }
+                type += PlaneChange(i);
+                ++i;
+                ++count;
+            }
+            --i;
+            type += i->lexeme;
+            while( count != 0 )
+            {
+                --i;
+                --count;
+            }
+            --i;
+
+            if( array.length != "" )
+            {
+                std::string arrayType;
+                
+                for( int index=0; type[index] != ' '; ++ index )
+                {
+                    arrayType += type[index];
+                }
+                while( i->lexeme != ";" && i->lexeme != "=" )
+                {
+                    ++i;
+                }
+                
+                line += "std::array< " + arrayType + ", " + array.length + " > " + array.name + " ";
+            }
+        }
+        
+        while( i->lexeme != ";" )
         {
             line += Change(i);
         }
+
         line += Change(i);
         m.values.emplace_back(line);
     }
@@ -733,7 +820,7 @@ private:
     }
 
 public:
-    static const std::vector<ClassData>& Analysis(const std::string& source )
+    static void Analysis(const std::string& source )
 	{
 		m_Tokens = GetTokens( source );
         
@@ -744,8 +831,20 @@ public:
                 Class(i);
                 --i;
             }
+            else if( i->lexeme == "#" )
+            {
+                std::string preprocess = "#";
+                ++i;
+                
+                while( i->lexeme != "#" && i->lexeme != "class" )
+                {
+                    preprocess += i->lexeme;
+                    ++i;
+                }
+                m_Preprocess.push_back( preprocess );
+                --i;
+            }
 		}
-        return m_Classes;
 	}
 
     static std::vector< std::string > GetStringList()
@@ -791,9 +890,7 @@ public:
         
         fclose( fp );
         
-        std::vector<ClassData> classes = Analysis( &data[0] );
-        
-        std::copy(classes.begin(),classes.end(),std::back_inserter(classes));
+        Analysis( &data[0] );
     }
 
     static std::map<std::string, bool> GetRefType(const ClassData& c)
@@ -845,6 +942,40 @@ public:
     static bool CompareClass(ClassData left, ClassData right)
     {
         return DepthClass( left ) < DepthClass( right );
+    }
+    
+    static void WriteMethodValues( FILE* fp, const std::list< std::string >& v )
+    {
+        int depth = 0;
+        
+        for( auto i=v.cbegin(); i != v.cend(); ++i )
+        {
+            if( *i == "}" )
+            {
+                --depth;
+            }
+            
+            if( i->substr(0,4) == "case" )
+            {
+                --depth;
+            }
+            
+            for( int l=0; l<depth; ++l )
+            {
+                fprintf( fp, "\t");
+            }
+            
+            if( i->substr(0,4) == "case" )
+            {
+                ++depth;
+            }
+            
+            if( *i == "{" )
+            {
+                ++depth;
+            }
+            fprintf( fp, "\t%s\n", (*i).c_str());
+        }
     }
     
     static void WriteClass()
@@ -913,26 +1044,7 @@ public:
                 fprintf( fp, "%s", c[i].classMethod[j].name.c_str());
                 fprintf( fp, "%s\n", c[i].classMethod[j].args.c_str());
                 
-                int depth = 0;
-                
-                for( auto k=c[i].classMethod[j].values.begin(); k!=c[i].classMethod[j].values.end(); ++k )
-                {
-                    if( *k == "}" )
-                    {
-                        --depth;
-                    }
-                    
-                    for( int l=0; l<depth; ++l )
-                    {
-                        fprintf( fp, "\t");
-                    }
-                    
-                    if( *k == "{" )
-                    {
-                        ++depth;
-                    }
-                    fprintf( fp, "%s\n", (*k).c_str());
-                }
+                WriteMethodValues( fp, c[i].classMethod[j].values );
             }
             for( int j=0; j<c[i].memberMethod.size(); ++j )
             {
@@ -944,26 +1056,7 @@ public:
                 fprintf( fp, "%s", c[i].memberMethod[j].name.c_str());
                 fprintf( fp, "%s\n", c[i].memberMethod[j].args.c_str());
                 
-                int depth = 0;
-                
-                for( auto k=c[i].memberMethod[j].values.begin(); k!=c[i].memberMethod[j].values.end(); ++k )
-                {
-                    if( *k == "}" )
-                    {
-                        --depth;
-                    }
-                    
-                    for( int l=0; l<depth; ++l )
-                    {
-                        fprintf( fp, "\t");
-                    }
-                    
-                    if( *k == "{" )
-                    {
-                        ++depth;
-                    }
-                    fprintf( fp, "\t%s\n", (*k).c_str());
-                }
+                WriteMethodValues( fp, c[i].memberMethod[j].values );
             }
             fprintf( fp, "};\n");
 
@@ -991,11 +1084,12 @@ public:
             fclose( fp );
         }
     }
-    static void WriteStringList()
+    
+    static void WriteUserInclude()
     {
-        FILE* fp = fopen( (m_Outputirectory + "user/string_list.hpp").c_str(), "w");
+        FILE* fp = fopen( (m_Outputirectory + "user/include.hpp").c_str(), "w");
         fprintf( fp, "#pragma once\n");
-        
+
         fprintf( fp, "namespace cppe\n" );
         fprintf( fp, "{\n" );
         
@@ -1004,13 +1098,12 @@ public:
             fprintf( fp, "\tstatic const string STRING_%04d = L\"%s\";\n", i, m_StringList[i].c_str());
         }
         fprintf( fp, "}\n\n" );
-        fclose( fp );
-    }
-    
-    static void WriteUserInclude()
-    {
-        FILE* fp = fopen( (m_Outputirectory + "user/include.hpp").c_str(), "w");
-        fprintf( fp, "#pragma once\n");
+
+        for( int i=0; i<m_Preprocess.size(); ++i )
+        {
+            fprintf( fp, "%s\n", m_Preprocess[i].c_str());
+        }
+        fprintf( fp, "\n\n" );
         
         for( int i=0; i<m_Classes.size(); ++i )
         {
@@ -1027,6 +1120,7 @@ public:
 };
 
 std::list< Token > Lexical::m_Tokens;
+std::vector< std::string > Lexical::m_Preprocess;
 std::vector< std::string > Lexical::m_StringList;
 std::vector<ClassData> Lexical::m_Classes;
 int Lexical::m_ScopeDepth = 0;
