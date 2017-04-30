@@ -131,7 +131,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "../bin/cppe2cpp $SRCROOT/cppe_sample/cppe ./ > Log.txt";
+			shellScript = "cp -R ../cppe/ $SRCROOT/cppe_sample/cppe\n../bin/cppe2cpp $SRCROOT/cppe_sample/cppe ./";
 		};
 /* End PBXShellScriptBuildPhase section */
 
