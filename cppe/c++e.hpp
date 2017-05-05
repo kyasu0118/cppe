@@ -9,9 +9,9 @@
 #include <locale.h>
 #include <typeinfo>
 #include <exception>
-#include <array>
 #include "object.hpp"
 #include "string.hpp"
+#include "array.hpp"
 #include "console.hpp"
 #include "file.hpp"
 #include "user/include.hpp"
