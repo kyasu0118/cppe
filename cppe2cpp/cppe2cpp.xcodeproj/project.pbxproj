@@ -26,6 +26,7 @@
 		4136B2201EAC46E600328E97 /* cppe2cpp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cppe2cpp; sourceTree = BUILT_PRODUCTS_DIR; };
 		4136B2231EAC46E600328E97 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		4136B22A1EAC471100328E97 /* Lexical.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Lexical.hpp; sourceTree = "<group>"; };
+		41BD664E1EB962D4003029BA /* cppe */ = {isa = PBXFileReference; lastKnownFileType = folder; name = cppe; path = ../cppe; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +45,7 @@
 			children = (
 				4136B2221EAC46E600328E97 /* cppe2cpp */,
 				4136B2211EAC46E600328E97 /* Products */,
+				41BD664E1EB962D4003029BA /* cppe */,
 			);
 			sourceTree = "<group>";
 		};

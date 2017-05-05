@@ -2,8 +2,10 @@
 
 namespace  cppe
 {
+    static const string ARRAY_TO_STRING = L"array";
+
     template < class T >
-    class array /*: public object*/
+    class array : public object
     {
     private:
         T* value;
@@ -31,12 +33,12 @@ namespace  cppe
             }
         }
         
-        array(std::initializer_list<T> init) : length( init.size() )
+        array( std::initializer_list<T> init ) : length( init.size() )
         {
             value = new T[ init.size() ];
             
             int index = 0;
-            for( const auto& i = init.begin(); i != init.end(); ++i )
+            for( auto i = init.begin(); i != init.end(); ++i )
             {
                 value[ index++ ] = *i;
             }
@@ -67,19 +69,18 @@ namespace  cppe
                 delete[] value;
             }
         }
-/*
+
         virtual const string& toString() const
         {
-            static to_string = string( L"array" );
-            return to_string;
+            return ARRAY_TO_STRING;
         }
 
-        inline T* operator()
+        inline operator T*()
         {
             return value;
         }
 
-        inline const T* operator() const
+        inline const operator T*() const
         {
             return value;
         }
@@ -99,7 +100,7 @@ namespace  cppe
             if( value != nullptr )
             {
                 delete[] value;
-                value = null;
+                value = nullptr;
             }
             
             ((size_t&)length) = right.length;
@@ -115,6 +116,6 @@ namespace  cppe
             }
             return *this;
         }
-*/
     };
 }
+

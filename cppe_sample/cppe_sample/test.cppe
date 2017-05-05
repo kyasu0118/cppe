@@ -1,21 +1,8 @@
-#include <stdio.H>
-
-class Base
+class Test
 {
-    public void aaa(int a)
-    {
-        console::print( "hello %d\n", a );
-    }
-}
-
-class Test : Base
-{
-    private const int a = 10;
-    public static double age = 20;
-
     public void hoge()
     {
-        int array[3] = { 1, 2, 3 };
+        int array[] = { 1, 2, 3 };
 
         foreach( int i in array )
         {

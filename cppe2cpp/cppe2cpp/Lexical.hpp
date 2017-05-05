@@ -616,6 +616,7 @@ private:
         std::string line = "";
         std::string type = "";
         bool isVarible = false;
+        bool isArray = false;
         ArrayData array;
         
         if( i->lexeme == "static")
@@ -668,6 +669,7 @@ private:
                 }
                 if( i->lexeme == "[")
                 {
+                    isArray = true;
                     --i;
                     array.name = i->lexeme;
                     ++i;
@@ -692,7 +694,7 @@ private:
             }
             --i;
 
-            if( array.length != "" )
+            if( isArray )
             {
                 std::string arrayType;
                 
@@ -705,7 +707,7 @@ private:
                     ++i;
                 }
                 
-                line += "std::array< " + arrayType + ", " + array.length + " > " + array.name + " ";
+                line += "cppe::array< " + arrayType + " > " + array.name + " ";
             }
         }
         
