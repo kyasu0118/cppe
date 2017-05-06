@@ -1,7 +1,7 @@
 1. Sales point
- 1. You do not have to wait for C ++ language extension.
- 2. C++ extenstion is sophisticated language specification.
- 3. Open source project.
+You do not have to wait for C ++ language extension.
+C++ extenstion is sophisticated language specification.
+Open source project.
  
 2. Description
 Convert C++ extension code to C++ code. 
