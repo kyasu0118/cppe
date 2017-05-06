@@ -1,5 +1,5 @@
 # *1. Sales point*   
-1. You do not have to wait for C ++ language extension.
+1. You do not have to wait for C++ language extension.
 2. C++ extenstion is sophisticated language specification.
 3. Open source project.
  
