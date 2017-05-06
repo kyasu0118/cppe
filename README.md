@@ -1,25 +1,25 @@
-1. Sales point
-You do not have to wait for C ++ language extension.
-C++ extenstion is sophisticated language specification.
-Open source project.
+*1. Sales point*   
+* You do not have to wait for C ++ language extension.
+* C++ extenstion is sophisticated language specification.
+* Open source project.
  
-2. Description
+*2. Description*  
 Convert C++ extension code to C++ code. 
 
-Example
-// From C++ extension code.
-class Test
-{
-    public void hoge()
-    {
-        int array[] = { 1, 2, 3 };
-
-        foreach( int i in array )
-        {
-            console::print( "%d\n", i);
-        }
-    }
-}
+Example  
+    // From C++ extension code.
+    class Test
+    {
+        public void hoge()
+        {
+            int array[] = { 1, 2, 3 };
+ 
+           foreach( int i in array )
+            {
+                console::print( "%d\n", i);
+            }
+        }
+    }
 
 // To C++ code.
 #pragma once
@@ -51,7 +51,7 @@ class Test : public cppe::object
 	}
 };
 
-3. License
+*3. License*  
 MIT License
 
 Copyright (c) 2017 kyasu
