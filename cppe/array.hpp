@@ -78,6 +78,15 @@ namespace  cppe
             return value + length;
         }
 
+        const T* cbegin() const
+        {
+            return value;
+        }
+        const T* cend() const
+        {
+            return value + length;
+        }
+
         virtual ~array()
         {
             release();

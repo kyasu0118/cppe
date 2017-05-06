@@ -2,9 +2,9 @@ class Test
 {
     public void hoge()
     {
-        int array[] = { 1, 2, 3 };
+        const int array[] = { 1, 2, 3 };
 
-        foreach( int i in array )
+        foreach( const int& i in array )
         {
             console::print( "%d\n", i);
         }

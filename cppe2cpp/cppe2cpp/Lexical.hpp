@@ -571,7 +571,7 @@ private:
         
         if( is_const )
         {
-            sprintf(buf, "for( const auto cppe_iterator%d = %s.cbegin(); cppe_iterator%d != %s.cend(); ++cppe_iterator%d )",
+            sprintf(buf, "for( auto cppe_iterator%d = %s.cbegin(); cppe_iterator%d != %s.cend(); ++cppe_iterator%d )",
                     m_ScopeDepth, collection.c_str(), m_ScopeDepth, collection.c_str(), m_ScopeDepth );
         }
         else
@@ -586,7 +586,14 @@ private:
         m.values.push_back("{");
         Step(i);
         
-        sprintf( buf, "%s %s = *cppe_iterator%d;", type.c_str(), name.c_str(), m_ScopeDepth );
+        if( is_const )
+        {
+            sprintf( buf, "const %s %s = *cppe_iterator%d;", type.c_str(), name.c_str(), m_ScopeDepth );
+        }
+        else
+        {
+            sprintf( buf, "%s %s = *cppe_iterator%d;", type.c_str(), name.c_str(), m_ScopeDepth );
+        }
         m.values.push_back(buf);
         
         ScopeDetail(m,i,false);
@@ -656,6 +663,10 @@ private:
         if( isVarible )
         {
             int count = 0;
+            if( i->lexeme == "const" )
+            {
+                ++i;
+            }
             type += PlaneChange(i);
             ++i;
             while( i->lexeme != ";" && i->lexeme != "=" )
@@ -706,7 +717,14 @@ private:
                     ++i;
                 }
                 
-                std::string line = "cppe::array< " + arrayType + " > " + array.name;
+                std::string line;
+                
+                if( array.is_const )
+                {
+                    line += "const ";
+                }
+                
+                line += "cppe::array< " + arrayType + " > " + array.name;
                 
                 if( i->lexeme == "=" )
                 {
