@@ -611,9 +611,8 @@ private:
         m.values.emplace_back(result);
     }
     
-    static void Line(MethodData& m, std::list< Token >::const_iterator& i  )
+    static bool Variable( MethodData& m, std::list< Token >::const_iterator& i  )
     {
-        std::string line = "";
         std::string type = "";
         bool isVarible = false;
         bool isArray = false;
@@ -645,15 +644,15 @@ private:
         {
             ++i;
             if( i->lexeme != "("  && i->lexeme != "{" &&
-                i->lexeme != "::" && i->lexeme != "." &&
-                i->lexeme != "->" )
+               i->lexeme != "::" && i->lexeme != "." &&
+               i->lexeme != "->" )
             {
                 isVarible = true;
                 m.refType[i->lexeme] = true;
             }
             --i;
         }
-        
+
         if( isVarible )
         {
             int count = 0;
@@ -663,7 +662,7 @@ private:
             {
                 --i;
                 if( i->lexeme != "*" && i->lexeme != "&" &&
-                    i->lexeme != "[" && i->lexeme != "]" && i->type != TT_INT  )
+                   i->lexeme != "[" && i->lexeme != "]" && i->type != TT_INT  )
                 {
                     type += " ";
                 }
@@ -677,7 +676,7 @@ private:
                     ++i;
                     if( i->type == TT_INT )
                     {
-                        array.length = i->lexeme.c_str();
+                        array.length = i->lexeme;
                     }
                     --i;
                 }
@@ -693,7 +692,7 @@ private:
                 --count;
             }
             --i;
-
+            
             if( isArray )
             {
                 std::string arrayType;
@@ -707,15 +706,88 @@ private:
                     ++i;
                 }
                 
-                line += "cppe::array< " + arrayType + " > " + array.name + " ";
+                std::string line = "cppe::array< " + arrayType + " > " + array.name;
+                
+                if( i->lexeme == "=" )
+                {
+                    ++i;
+                    if( i->lexeme != "{" )
+                    {
+                        throw std::exception();
+                    }
+                    line += "(";
+                    ++i;
+                    
+                    int length = 0;
+                    
+                    std::list< Token >::const_iterator pos = i;
+                    while( i->lexeme != "}" )
+                    {
+                        if( i->lexeme != "," )
+                        {
+                            ++length;
+                        }
+                        ++i;
+                    }                    
+                    i = pos;
+                    if( length != 0 )
+                    {
+                        char count_string[32] = {};
+                        if( array.length != "" )
+                        {
+                            sprintf( count_string, " %s, %d, ", array.length.c_str(), length );
+                        }
+                        else
+                        {
+                            sprintf( count_string, " %d, %d, ", length, length );
+                        }
+                        line += std::string( count_string );
+                    }
+                    else
+                    {
+                        line += array.length + std::string(", 0 ");
+                    }
+                }
+                else
+                {
+                    line += std::string("( ") + array.length + ", 0 )";
+                }
+
+                while( i->lexeme != ";" )
+                {
+                    if( i->lexeme == "}" )
+                    {
+                        line += " )";
+                        ++i;
+                        continue;
+                    }
+                    bool space = i->lexeme == ",";
+                    line += PlaneChange(i);
+                    if( space )
+                    {
+                        line += " ";
+                    }
+                }
+                line += Change(i);
+                m.values.emplace_back(line);
+                return true;
             }
         }
+        return false;
+    }
+    
+    static void Line( MethodData& m, std::list< Token >::const_iterator& i  )
+    {
+        if( Variable( m, i ) == true )
+        {
+            return;
+        }
+        std::string line = "";
         
         while( i->lexeme != ";" )
         {
             line += Change(i);
         }
-
         line += Change(i);
         m.values.emplace_back(line);
     }

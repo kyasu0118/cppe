@@ -9,41 +9,57 @@ namespace  cppe
     {
     private:
         T* value;
-    
-        array(const size_t _lenght) : length(_lenght)
-        {
-            value = new T[length];
-        }
-    
+        
     public:
         const size_t length;
-    
+
+    private:
+        inline void release()
+        {
+            for( size_t i=0; i<length; ++i )
+            {
+                value[i].~T();
+            }
+            free( value );
+            value = NULL;
+        }
+        
+    public:
+        array(const array& copy) : length(copy.length)
+        {
+            value = (T*)malloc( sizeof(T)*length );
+            
+            for( size_t i=0; i<length; ++i )
+            {
+                new( &value[i] ) T();
+                value[i] = copy.value[i];
+            }
+        }
+        
         array() : length(0)
         {
             value = nullptr;
         }
     
-        array(const array& copy) : length(copy.length)
+        array( size_t _length, size_t initialize_count, ... ) : length( _length )
         {
-            value = new T[length];
-        
-            for( size_t i=0; i<length; ++i )
-            {
-                value[i] = copy.value[i];
-            }
-        }
-        
-        array( std::initializer_list<T> init ) : length( init.size() )
-        {
-            value = new T[ init.size() ];
+            value = (T*)calloc( length, sizeof(T) );
             
-            int index = 0;
-            for( auto i = init.begin(); i != init.end(); ++i )
+            va_list list;
+            va_start(list, initialize_count);
+            
+            for( size_t i=0; i<initialize_count; ++i )
             {
-                value[ index++ ] = *i;
+                new( &value[i] ) T();
+                value[i] = va_arg( list , T );
             }
+            
+            va_end(list);
         }
-
+    
+/* C++11
+        array( std::initializer_list<T> init ) : length( init.size() )
+*/
         T* begin()
         {
             return value;
@@ -64,10 +80,7 @@ namespace  cppe
 
         virtual ~array()
         {
-            if( value != nullptr )
-            {
-                delete[] value;
-            }
+            release();
         }
 
         virtual const string& toString() const
@@ -95,23 +108,20 @@ namespace  cppe
             return value[index];
         }
         
-        inline array& operator=( const string& right )
+        inline array& operator=( const array& right )
         {
-            if( value != nullptr )
-            {
-                delete[] value;
-                value = nullptr;
-            }
+            release();
             
             ((size_t&)length) = right.length;
             
             if( length != 0 )
             {
-                value = new T[length];
-            
+                value = (T*)calloc( sizeof(T)*length );
+                
                 for( size_t i=0; i<length; ++i )
                 {
-                    value[i] = right[i];
+                    new( &value[i] ) T();
+                    value[i] = right.value[i];
                 }
             }
             return *this;

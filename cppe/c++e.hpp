@@ -4,6 +4,7 @@
 #define CPPE_LANGUAGE "ja_JP"
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstdarg>
 #include <cwchar>
 #include <locale.h>

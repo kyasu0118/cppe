@@ -6,9 +6,7 @@ class Test
 
         foreach( int i in array )
         {
-            console::print( "%d\n", i );
+            console::print( "%d\n", i);
         }
     }
 }
-
-
