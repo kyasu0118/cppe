@@ -624,7 +624,10 @@ private:
         bool isVarible = false;
         bool isArray = false;
         ArrayData array;
-        
+        int element_index = 0;
+        std::string line;
+        char array_initialize[256] = {};
+
         if( i->lexeme == "static")
         {
             array.access_modifier = "static";
@@ -707,17 +710,16 @@ private:
             if( isArray )
             {
                 std::string arrayType;
-                
+
                 for( int index=0; type[index] != ' '; ++ index )
                 {
                     arrayType += type[index];
                 }
+                array.type = arrayType;
                 while( i->lexeme != ";" && i->lexeme != "=" )
                 {
                     ++i;
                 }
-                
-                std::string line;
                 
                 if( array.is_const )
                 {
@@ -733,61 +735,96 @@ private:
                     {
                         throw std::exception();
                     }
-                    line += "(";
                     ++i;
                     
-                    int length = 0;
+                    int length = 1;
                     
                     std::list< Token >::const_iterator pos = i;
-                    while( i->lexeme != "}" )
+                    
+                    if( i->lexeme == "}" )
                     {
-                        if( i->lexeme != "," )
+                        length = 0;
+                    }
+                    else
+                    {
+                        while( i->lexeme != "}" )
                         {
-                            ++length;
+                            if( i->lexeme == "," )
+                            {
+                                ++length;
+                            }
+                            ++i;
                         }
-                        ++i;
-                    }                    
+                    }
                     i = pos;
                     if( length != 0 )
                     {
                         char count_string[32] = {};
                         if( array.length != "" )
                         {
-                            sprintf( count_string, " %s, %d, ", array.length.c_str(), length );
+                            sprintf( count_string, "(%s);", array.length.c_str() );
                         }
                         else
                         {
-                            sprintf( count_string, " %d, %d, ", length, length );
+                            sprintf( count_string, "(%d);", length );
                         }
                         line += std::string( count_string );
+                        m.values.emplace_back(line);
+                        
+                        sprintf( array_initialize, "new ( &((cppe::array< %s >&)%s)[%d] ) %s(",
+                                array.type.c_str(), array.name.c_str(), element_index, array.type.c_str() );
+                        line = array_initialize;
+                        
+                        while( i->lexeme != "}" )
+                        {
+                            if( i->lexeme == "," )
+                            {
+                                line += ");";
+                                m.values.emplace_back(line);
+                                ++element_index;
+                                sprintf( array_initialize, "new ( &((cppe::array< %s >&)%s)[%d] ) %s(",
+                                        array.type.c_str(), array.name.c_str(), element_index, array.type.c_str() );
+                                line = array_initialize;
+                                ++i;
+                            }
+                            else
+                            {
+                                line += PlaneChange(i);
+                            }
+                        }
+                        line += ");";
+                        m.values.emplace_back(line);
+                        ++element_index;
                     }
                     else
                     {
-                        line += array.length + std::string(", 0 ");
+                        line += array.length+");";
+                        m.values.emplace_back(line);
                     }
                 }
                 else
                 {
-                    line += std::string("( ") + array.length + ", 0 )";
+                    if( array.length != "" )
+                    {
+                        line += std::string("(") + array.length + ")";
+                    }
+                    line += ";";
+                    m.values.emplace_back(line);
                 }
-
-                while( i->lexeme != ";" )
+                
+                for( ; element_index<atoi(array.length.c_str()); ++element_index )
                 {
-                    if( i->lexeme == "}" )
-                    {
-                        line += " )";
-                        ++i;
-                        continue;
-                    }
-                    bool space = i->lexeme == ",";
-                    line += PlaneChange(i);
-                    if( space )
-                    {
-                        line += " ";
-                    }
+                    sprintf( array_initialize, "new ( &((cppe::array< %s >&)%s)[%d] ) %s();",
+                            array.type.c_str(), array.name.c_str(), element_index, array.type.c_str() );
+                    line = array_initialize;
+                    
+                    m.values.emplace_back(line);
                 }
-                line += Change(i);
-                m.values.emplace_back(line);
+                while( i->lexeme != ";")
+                {
+                    ++i;
+                }
+                ++i;
                 return true;
             }
         }

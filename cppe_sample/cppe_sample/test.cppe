@@ -2,11 +2,13 @@ class Test
 {
     public void hoge()
     {
-        const int array[] = { 1, 2, 3 };
+        double array[];
 
-        foreach( const int& i in array )
+        array += 20.0;
+
+        foreach( double d in array )
         {
-            console::print( "%d\n", i);
+            console::print( "%f\n", d);
         }
     }
 }

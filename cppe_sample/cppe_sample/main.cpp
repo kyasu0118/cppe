@@ -3,7 +3,6 @@
 
 int main(int argc, const char * argv[])
 {
-
     Test t;
     t.hoge();
     

@@ -7,13 +7,12 @@ namespace  cppe
     template < class T >
     class array : public object
     {
-    private:
-        T* value;
-        
     public:
         const size_t length;
 
     private:
+        T* value;
+
         inline void release()
         {
             for( size_t i=0; i<length; ++i )
@@ -23,38 +22,26 @@ namespace  cppe
             free( value );
             value = NULL;
         }
-        
+
     public:
         array(const array& copy) : length(copy.length)
         {
             value = (T*)malloc( sizeof(T)*length );
-            
+
             for( size_t i=0; i<length; ++i )
             {
-                new( &value[i] ) T();
-                value[i] = copy.value[i];
+                new( &value[i] ) T( copy.value[i] );
             }
         }
         
         array() : length(0)
         {
-            value = nullptr;
+            value = NULL;
         }
-    
-        array( size_t _length, size_t initialize_count, ... ) : length( _length )
+        
+        array( size_t _length ) : length( _length )
         {
             value = (T*)calloc( length, sizeof(T) );
-            
-            va_list list;
-            va_start(list, initialize_count);
-            
-            for( size_t i=0; i<initialize_count; ++i )
-            {
-                new( &value[i] ) T();
-                value[i] = va_arg( list , T );
-            }
-            
-            va_end(list);
         }
     
 /* C++11
@@ -133,6 +120,22 @@ namespace  cppe
                     value[i] = right.value[i];
                 }
             }
+            return *this;
+        }
+        
+        inline array& operator +=( const T& object )
+        {
+            T* temp = (T*)calloc( length+1, sizeof(T) );
+            
+            if( value != NULL )
+            {
+                memcpy( temp, value, sizeof(T)*length );
+                free( value );
+            }
+            new( &temp[length] ) T(object);
+            value = temp;
+            ++((size_t&)length);
+            
             return *this;
         }
     };
