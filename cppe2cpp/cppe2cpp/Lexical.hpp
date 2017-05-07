@@ -21,7 +21,7 @@ struct Token
 
 struct VariableData
 {
-    std::string name, access_modifier, type, initial_value;
+    std::string name, access_modifier, type, initial_value, array_length;
     bool is_const;
 };
 
@@ -53,6 +53,7 @@ struct ClassData
     std::vector< MethodData > classMethod;
     std::vector< MethodData > memberMethod;
     std::map< std::string, bool > refType;
+    std::vector< std::string > initializeClassVariableArray;
 };
 
 class Lexical
@@ -455,7 +456,26 @@ private:
                     v.initial_value += Change(i);
                 }
             }
-            if( i->lexeme != ";" )
+            // array.
+            if( i->lexeme == "[" )
+            {
+                Step(i);
+                v.type = "cppe::array< " + v.type + " >";
+                if( i->type == TT_INT )
+                {
+                    v.array_length = PlaneChange(i);
+                    if( isClass == false )
+                    {
+                        v.initial_value = v.array_length;
+                    }
+                }
+                
+                while( i->lexeme != ";" )
+                {
+                    Step(i);
+                }
+            }
+            else if( i->lexeme != ";" )
             {
                 throw std::exception();
             }
@@ -627,32 +647,36 @@ private:
         int element_index = 0;
         std::string line;
         char array_initialize[256] = {};
-
+        std::list< Token >::const_iterator back_point;
+        
         if( i->lexeme == "static")
         {
             array.access_modifier = "static";
             isVarible = true;
-            ++i;
+            back_point = i;
+
+            Step(i);
             if( i->lexeme == "const" )
             {
-                ++i;
+                Step(i);
                 array.is_const = true;
                 m.refType[i->lexeme] = true;
-                --i;
             }
-            --i;
+            i = back_point;
         }
         else if( i->lexeme == "const" )
         {
+            back_point = i;
             isVarible = true;
             array.is_const = true;
-            ++i;
+            Step(i);
             m.refType[i->lexeme] = true;
-            --i;
+            i = back_point;
         }
         else
         {
-            ++i;
+            back_point = i;
+            Step(i);
             if( i->lexeme != "("  && i->lexeme != "{" &&
                i->lexeme != "::" && i->lexeme != "." &&
                i->lexeme != "->" )
@@ -660,18 +684,18 @@ private:
                 isVarible = true;
                 m.refType[i->lexeme] = true;
             }
-            --i;
+            i = back_point;
         }
 
         if( isVarible )
         {
-            int count = 0;
+            i = back_point;
             if( i->lexeme == "const" )
             {
-                ++i;
+                Step(i);
             }
             type += PlaneChange(i);
-            ++i;
+            Step(i);
             while( i->lexeme != ";" && i->lexeme != "=" )
             {
                 --i;
@@ -685,9 +709,9 @@ private:
                     isArray = true;
                     --i;
                     array.name = i->lexeme;
-                    ++i;
+                    Step(i);
                     
-                    ++i;
+                    Step(i);
                     if( i->type == TT_INT )
                     {
                         array.length = i->lexeme;
@@ -695,17 +719,11 @@ private:
                     --i;
                 }
                 type += PlaneChange(i);
-                ++i;
-                ++count;
+                Step(i);
             }
             --i;
             type += i->lexeme;
-            while( count != 0 )
-            {
-                --i;
-                --count;
-            }
-            --i;
+            i = back_point;
             
             if( isArray )
             {
@@ -718,7 +736,7 @@ private:
                 array.type = arrayType;
                 while( i->lexeme != ";" && i->lexeme != "=" )
                 {
-                    ++i;
+                    Step(i);
                 }
                 
                 if( array.is_const )
@@ -730,16 +748,16 @@ private:
                 
                 if( i->lexeme == "=" )
                 {
-                    ++i;
+                    Step(i);
                     if( i->lexeme != "{" )
                     {
                         throw std::exception();
                     }
-                    ++i;
+                    Step(i);
                     
                     int length = 1;
                     
-                    std::list< Token >::const_iterator pos = i;
+                    back_point = i;
                     
                     if( i->lexeme == "}" )
                     {
@@ -753,10 +771,10 @@ private:
                             {
                                 ++length;
                             }
-                            ++i;
+                            Step(i);
                         }
                     }
-                    i = pos;
+                    i = back_point;
                     if( length != 0 )
                     {
                         char count_string[32] = {};
@@ -822,9 +840,9 @@ private:
                 }
                 while( i->lexeme != ";")
                 {
-                    ++i;
+                    Step(i);
                 }
-                ++i;
+                Step(i);
                 return true;
             }
         }
@@ -1205,6 +1223,10 @@ public:
                     if( c[i].classVariable[j].initial_value != "" )
                     {
                         fprintf( fp, " = %s", c[i].classVariable[j].initial_value.c_str());
+                    }
+                    if( c[i].classVariable[j].array_length != "" )
+                    {
+                        fprintf( fp, "(%s)", c[i].classVariable[j].array_length.c_str());
                     }
                     fprintf( fp, ";\n");
                 }
