@@ -11,32 +11,48 @@ Example  
 // From C++ extension code. 
 class Test
 {
-    public void hoge()
-    {
-    	int array[] = { 1, 2, 3 };
- 
-        foreach( int i in array )
-        {
-            console::print( "%d\n", i)
-	}
-    }
+    private int abc = 20;
+
+    public void hoge()
+    {
+        double array[] = { 1 ,2, 3 };
+
+        array += 10.0;
+
+        foreach( double d in array )
+        {
+            console::print( "%d %f\n", abc, d);
+        }
+    }
 }
+```
+Output
+```
+20 1.000000
+20 2.000000
+20 3.000000
+20 10.000000
 ```
 ```
 // To C++ code.
 #pragma once
 class Test : public cppe::object
 {
+	private: int abc;
 	public: void hoge() 
 	{
-		cppe::array< int > array( 3, 3, 1, 2, 3 ); 
+		cppe::array< double > array(3);
+		new ( &((cppe::array< double >&)array)[0] ) double(1);
+		new ( &((cppe::array< double >&)array)[1] ) double(2);
+		new ( &((cppe::array< double >&)array)[2] ) double(3);
+		array += 10.0; 
 		for( auto cppe_iterator1 = array.begin(); cppe_iterator1 != array.end(); ++cppe_iterator1 )
 		{
-			int i = *cppe_iterator1;
-			cppe::console::print( cppe::STRING_0000 , i ); 
+			double d = *cppe_iterator1;
+			cppe::console::print( cppe::STRING_0000 , abc , d ); 
 		}
 	}
-	public: Test()
+	public: Test() : abc(20)
 	{
 	}
 	public: const cppe::string& toString() const
@@ -52,6 +68,7 @@ class Test : public cppe::object
 		  return typeid(Test);
 	}
 };
+
 ```
 
 # *3. License*  
